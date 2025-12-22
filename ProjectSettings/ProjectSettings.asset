@@ -4,7 +4,7 @@
 PlayerSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 26
-  productGUID: 777c3247856ff6543afdb93fb9da7f8f
+  productGUID: 31f8a2c03038210469d20295b7bff016
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
   AndroidEnableSustainedPerformanceMode: 0
@@ -759,10 +759,10 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
-  cloudProjectId: b5700156-4ca2-4de6-bf1e-ded49203cc90
+  cloudProjectId: 31767513-72a2-4c50-9e2b-ce4d9dccf783
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: GrupoQJuegoIA2 2025-12-22_18-43-16
+  projectName: GrupoQJuegoIA2 2025-12-22_19-04-48
   organizationId: panthex2801
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
