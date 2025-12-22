@@ -33,10 +33,14 @@ namespace GrupoQ
         ///  3. Devuelve el valor almacenado en:
         ///        _storage.Data[stateKey][index]
         /// </summary>
+        /// 
+
         public float GetQ(string stateKey, QAction action)
         {
             // Implementa aquí la lectura de Q(s,a) desde la tabla
-            throw new NotImplementedException();
+            EnsureState(stateKey);
+            int index = (int)action;
+            return _storage.Data[stateKey][index];
         }
 
         /// <summary>
@@ -53,7 +57,9 @@ namespace GrupoQ
         public void SetQ(string stateKey, QAction action, float value)
         {
             // Implementa aquí la escritura de Q(s,a) en la tabla
-            throw new NotImplementedException();
+            EnsureState(stateKey);
+            int index = (int)action;
+            _storage.Data[stateKey][index] = value;
         }
 
         /// <summary>
@@ -72,7 +78,21 @@ namespace GrupoQ
         public float GetMaxQ(string stateKey)
         {
             // Implementa aquí el cálculo de max_a Q(s,a)
-            throw new NotImplementedException();
+            EnsureState(stateKey);
+            var qValues = _storage.Data[stateKey];
+
+            float max = qValues[0];
+
+            for (int i = 1; i < qValues.Length; i++)
+            {
+                if (qValues[i] > max)
+                {
+                    max = qValues[i];
+                }
+            }
+
+            return max;
+
         }
 
         /// <summary>
@@ -95,7 +115,23 @@ namespace GrupoQ
         public QAction GetBestAction(string stateKey)
         {
             // Implementa aquí la selección de la mejor acción según la Tabla Q
-            throw new NotImplementedException();
+
+            EnsureState(stateKey);
+            var qValues = _storage.Data[stateKey];
+
+            int bestIndex = 0;
+            float bestValue = 0;
+
+            for (int i = 0; i < qValues.Length; i++)
+            {
+                if (qValues[i] > bestValue)
+                {
+                    bestValue = qValues[i];
+                    bestIndex = i;
+                }
+            }
+
+            return (QAction)bestIndex;
         }
 
         public void SaveToCsv()

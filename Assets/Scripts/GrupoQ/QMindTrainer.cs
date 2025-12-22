@@ -134,13 +134,26 @@ namespace GrupoQ
         /// </summary>
         private QAction ChooseAction(string stateKey, bool train)
         {
+            if(!train)
+            {
+                return _qTable.GetBestAction(stateKey);
+            }
+
+            double r = _random.NextDouble();
+
+            if(r < _params.epsilon)
+            {
+                int actionCount = Enum.GetValues(typeof(QAction)).Length;
+                return (QAction)_random.Next(actionCount);
+            }
+
+           return _qTable.GetBestAction(stateKey);
             // TODO (alumno):
             // 1. Si !train -> return _qTable.GetBestAction(stateKey);
             // 2. Si train:
             //    - double r = _random.NextDouble();
             //    - si r < _params.epsilon -> acción aleatoria
             //    - si no -> _qTable.GetBestAction(stateKey)
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -151,12 +164,13 @@ namespace GrupoQ
         private void UpdateQ(string stateKey, QAction action, float reward, string nextStateKey)
         {
             // TODO (alumno):
-            // float oldQ = _qTable.GetQ(stateKey, action);
-            // float maxQNext = _qTable.GetMaxQ(nextStateKey);
-            // float target = reward + _params.gamma * maxQNext;
-            // float newQ = (1 - _params.alpha) * oldQ + _params.alpha * target;
-            // _qTable.SetQ(stateKey, action, newQ);
-            throw new NotImplementedException();
+            float oldQ = _qTable.GetQ(stateKey, action);
+            float maxQNext = _qTable.GetMaxQ(nextStateKey);
+            
+            float target = reward + _params.gamma * maxQNext;
+            float newQ = (1 - _params.alpha) * oldQ + _params.alpha * target;
+            
+            _qTable.SetQ(stateKey, action, newQ);
         }
 
         /// <summary>
@@ -169,9 +183,14 @@ namespace GrupoQ
         {
             // TODO (alumno).
             // Ejemplo orientativo:
-            // if (agent == other) return 10f;
-            // else return -0.01f;
-            throw new NotImplementedException();
+            if (agent == other) 
+                return -100f;
+
+            int dx = agent.x - other.x;
+            int dy = agent.y - other.y;
+            float distance = Math.Abs(dx) + Math.Abs(dy);
+
+            return distance * 0.1f;
         }
 
         /// <summary>
@@ -182,8 +201,7 @@ namespace GrupoQ
         private bool IsTerminalState(CellInfo agent, CellInfo other)
         {
             // TODO (alumno):
-            // return agent == other;
-            throw new NotImplementedException();
+            return agent == other;
         }
 
 
@@ -200,8 +218,13 @@ namespace GrupoQ
                 case QAction.Left:  nx -= 1; break;
                 case QAction.Stay:  return agentCell;
             }
+           
+            CellInfo cell = _worldInfo[nx, ny];
 
-            return _worldInfo[nx, ny];
+            if(!cell.Walkable || !cell.Walkable)
+                return agentCell;
+
+            return cell;
         }
 
 
