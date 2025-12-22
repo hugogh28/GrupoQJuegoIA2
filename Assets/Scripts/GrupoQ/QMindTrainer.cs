@@ -183,8 +183,11 @@ namespace GrupoQ
         {
             // TODO (alumno).
             // Ejemplo orientativo:
-            if (agent == other) 
+            if (IsTerminalState(agent, other)) 
                 return -100f;
+
+            if (agent == _agentPosition)
+                return -5f;
 
             int dx = agent.x - other.x;
             int dy = agent.y - other.y;
@@ -221,7 +224,7 @@ namespace GrupoQ
            
             CellInfo cell = _worldInfo[nx, ny];
 
-            if(!cell.Walkable || !cell.Walkable)
+            if(cell == null || !cell.Walkable)
                 return agentCell;
 
             return cell;

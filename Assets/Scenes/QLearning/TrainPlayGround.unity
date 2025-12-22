@@ -549,8 +549,8 @@ MonoBehaviour:
   other: {fileID: 1518200256}
   qLearningTrainerClass: GrupoQ.QMindTrainer, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
     PublicKeyToken=null
-  showSimulation: 1
-  agentSpeed: 3
+  showSimulation: 0
+  agentSpeed: 1000
   train: 1
   algorithmParams:
     alpha: 0.2

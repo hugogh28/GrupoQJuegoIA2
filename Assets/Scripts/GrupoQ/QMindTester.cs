@@ -20,11 +20,17 @@ namespace GrupoQ
 
         public CellInfo GetNextStep(CellInfo currentPosition, CellInfo otherPosition)
         {
+            if (currentPosition == null)
+                return otherPosition;
+
             string stateKey = BuildStateKey(currentPosition, otherPosition);
 
             QAction bestAction = _qTable.GetBestAction(stateKey);
 
             CellInfo nextPosition = ApplyAction(currentPosition, bestAction);
+
+            if (nextPosition == null)
+                return currentPosition;
 
             return nextPosition;
         }
@@ -55,6 +61,13 @@ namespace GrupoQ
                 default:
                     return new CellInfo(agentCell.x, agentCell.y);
             }
+
+            CellInfo cell = _worldInfo[agentCell.x, agentCell.y];
+
+            if (cell == null || !cell.Walkable)
+                return agentCell;
+
+            return cell;
         }
     }
 }
