@@ -184,7 +184,7 @@ namespace GrupoQ
             // TODO (alumno).
             // Ejemplo orientativo:
             if (IsTerminalState(agent, other)) 
-                return -100f;
+                return -10f;
 
             if (agent == _agentPosition)
                 return -5f;
