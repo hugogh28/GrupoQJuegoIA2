@@ -184,18 +184,57 @@ namespace GrupoQ
             // TODO (alumno).
             // Ejemplo orientativo:
             if (IsTerminalState(agent, other)) 
-                return -10f;
+                return -1000f;
 
-            if (agent == _agentPosition)
-                return -5f;
+            int dNow = Math.Abs(agent.x - other.x) + Math.Abs(agent.y - other.y);
+            int dPrev = Math.Abs(_agentPosition.x - _otherPosition.x) +
+                        Math.Abs(_agentPosition.y - _otherPosition.y);
 
-            int dx = agent.x - other.x;
-            int dy = agent.y - other.y;
-            float distance = Math.Abs(dx) + Math.Abs(dy);
+            float reward = 0f;
 
-            return distance * 0.1f;
+            if (dNow > dPrev)
+                reward += 80f;
+
+            // Acercarse al enemigo
+            if (dNow < dPrev)
+                reward -= 120f;
+
+            // Bonus por zona segura
+            if (dNow >= 6)
+                reward += 100f;
+
+            if (dNow <= 2)
+                reward -= 200f;
+
+
+            if (dNow >= 8)
+                reward += 150f;
+
+            // Penalizar quedarse quieto
+            if (agent == _agentPosition && dNow <= dPrev)
+                reward -= 50f;
+
+            // Penalizar estar atrapado
+            int availableExits = CountAvailableExits(agent);
+            reward += availableExits * 10f;
+
+            if (availableExits <= 1)
+                reward -= 100f;
+
+            reward += 1f;
+
+            return reward;
         }
 
+        private int CountAvailableExits(CellInfo c)
+        {
+            int exit = 0;
+            if (_worldInfo[c.x + 1, c.y]?.Walkable == true) exit++;
+            if (_worldInfo[c.x - 1, c.y]?.Walkable == true) exit++;
+            if (_worldInfo[c.x, c.y + 1]?.Walkable == true) exit++;
+            if (_worldInfo[c.x, c.y - 1]?.Walkable == true) exit++;
+            return exit;
+        }
         /// <summary>
         /// Condición de final de episodio.
         /// Lo más simple: cuando agente y oponente están en la misma celda.

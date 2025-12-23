@@ -1,4 +1,6 @@
 using NavigationDJIA.World;
+using System;
+using Unity.VisualScripting;
 
 /// <summary>
 /// TODO(alumno):
@@ -27,22 +29,39 @@ namespace GrupoQ
 {
     public sealed class QState
     {
-        public int AgentX { get; }
-        public int AgentY { get; }
-        public int OtherX { get; }
-        public int OtherY { get; }
+        public int DirX { get; }
+        public int DirY { get; }
+
+        public int Proximity { get; }
+        public int DangerLevel { get; }
 
         public QState(CellInfo agent, CellInfo other)
         {
-            AgentX = agent.x;
-            AgentY = agent.y;
-            OtherX = other.x;
-            OtherY = other.y;
+            int dx = other.x - agent.x;
+            int dy = other.y - agent.y;
+
+            DirX = Math.Sign(dx);
+            DirY = Math.Sign(dy);
+
+            int dist = Math.Abs(dx) + Math.Abs(dy);
+
+            if (dist <= 1)
+                Proximity = 0;
+            else if (dist <= 3)
+                Proximity = 1;
+            else if (dist <= 6)
+                Proximity = 2;
+            else
+                Proximity = 3;
+
+            DangerLevel = dist <= 2 ? 2 : (dist <= 4 ? 1 : 0);
         }
 
         public string ToKey()
         {
-            return $"{AgentX},{AgentY}|{OtherX},{OtherY}";
+            //reducion de estados
+
+            return $"{DirX},{DirY},{Proximity},{DangerLevel}";
         }
     }
 }
