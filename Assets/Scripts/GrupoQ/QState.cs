@@ -40,6 +40,8 @@ namespace GrupoQ
         public bool BetweenWalls { get; }
         public bool IsBorder {  get; }
         public bool IsOneWall {  get; }
+        //public bool BetweenWallsAndBorders { get; }
+
 
         public QState(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
         {
@@ -51,6 +53,8 @@ namespace GrupoQ
             IsBorder = CountAvailableExits(agent, _worldInfo) == 3 && CountOutsideWorldCells(agent,_worldInfo)==1;
 
             IsOneWall = CountOutsideWorldCells(agent, _worldInfo) == 0 && CountAvailableExits(agent,_worldInfo) == 3;
+
+            //BetweenWallsAndBorders = CountOutsideWorldCells(agent, _worldInfo) == 1 && CountAvailableExits(agent,_worldInfo) <= 2;
 
             BetweenWalls = RadiusAroundAgent(agent,_worldInfo) >= 2; //Aunque se observa que hay solapamiento con IsCornerOrAlley es crucial para hacer la diferencia entre esquinas del mundo y las paredes
 

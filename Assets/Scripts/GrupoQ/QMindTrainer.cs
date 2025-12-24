@@ -183,13 +183,15 @@ namespace GrupoQ
         private float ComputeReward(CellInfo agent, CellInfo other, CellInfo _agentPosition, CellInfo _otherPosition)
         {
             float reward = 0f;
+            float mult = 0f;
             // TODO (alumno).
             // Ejemplo orientativo:
             if (IsTerminalState(agent, other))
-                return reward -= 100f;
+                return reward -= 10f;
             else
             {
-                reward += 5f;
+                mult = 1f + (0.01f * CurrentStep);
+                reward += mult;
                 return reward;
             }
         }
