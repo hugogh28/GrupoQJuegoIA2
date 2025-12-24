@@ -550,13 +550,13 @@ MonoBehaviour:
   qLearningTrainerClass: GrupoQ.QMindTrainer, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
     PublicKeyToken=null
   showSimulation: 0
-  agentSpeed: 100000000
+  agentSpeed: 10
   train: 1
   algorithmParams:
-    alpha: 0.2
-    epsilon: 0.02
+    alpha: 0.3
+    epsilon: 0.1
     gamma: 0.98
-    episodes: 5000
+    episodes: 500
     maxSteps: -1
     episodesBetweenSaves: 100
 --- !u!4 &430024629

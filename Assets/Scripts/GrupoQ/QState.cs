@@ -35,10 +35,21 @@ namespace GrupoQ
         public int Proximity { get; }
         public int DangerLevel { get; }
 
-        public QState(CellInfo agent, CellInfo other)
+        public bool IsCornerOrAlley { get; }
+
+        public bool BetweenWalls { get; }
+        public bool IsBorderOrOneWall {  get; }
+
+        public QState(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
         {
             int dx = other.x - agent.x;
             int dy = other.y - agent.y;
+
+            IsCornerOrAlley = CountAvailableExits(agent, _worldInfo) <= 2;
+
+            IsBorderOrOneWall = CountAvailableExits(agent, _worldInfo) == 3;
+
+            BetweenWalls = RadiusAroundAgent(agent,other,_worldInfo) >= 2;
 
             DirX = Math.Sign(dx);
             DirY = Math.Sign(dy);
@@ -57,11 +68,73 @@ namespace GrupoQ
             DangerLevel = dist <= 2 ? 2 : (dist <= 4 ? 1 : 0);
         }
 
+        public int CountAvailableExits(CellInfo c, WorldInfo _worldInfo)
+        {
+            int exit = 0;
+            if (_worldInfo[c.x + 1, c.y]?.Walkable == true) exit++;
+            if (_worldInfo[c.x - 1, c.y]?.Walkable == true) exit++;
+            if (_worldInfo[c.x, c.y + 1]?.Walkable == true) exit++;
+            if (_worldInfo[c.x, c.y - 1]?.Walkable == true) exit++;
+            return exit;
+        }
+        private int RadiusAroundAgent(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
+        {
+            int walls = 0;
+            for(int i = 1; i<=2; i++)
+            {
+                
+                    if (_worldInfo[agent.x + i,agent.y]?.Walkable == false) walls++;
+                    if (_worldInfo[agent.x - i,agent.y]?.Walkable == false) walls++;
+                    if (_worldInfo[agent.x,agent.y+i]?.Walkable == false) walls++;
+                    if (_worldInfo[agent.x,agent.y+i]?.Walkable == false) walls++;
+            }
+            if (_worldInfo[agent.x+1,agent.y+1]?.Walkable==false) walls++;
+            if (_worldInfo[agent.x-1,agent.y+1]?.Walkable==false) walls++;
+            if (_worldInfo[agent.x-1,agent.y-1]?.Walkable==false) walls++;
+            if (_worldInfo[agent.x+1,agent.y-1]?.Walkable==false) walls++;
+            return walls;
+        }
+        /*private int CountWallBetweenPlayer(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
+        {
+            int walls = 0;
+            
+            if (agent.y - other.y >= 0)
+            {
+                for (int i = agent.y-1; i >= other.y; i--)
+                {
+                    if (_worldInfo[agent.x, agent.y - i]?.Walkable == false) walls++;
+                }
+            }
+            else if (agent.y - other.y < 0)
+            {
+                for (int i = other.y-1; i >= agent.y; i--)
+                {
+                    if (_worldInfo[other.x, other.y - i]?.Walkable == false) walls++;
+                }
+            }
+            if (agent.x - other.x >= 0)
+            {
+                for (int i = agent.x-1; i >= other.x; i--)
+                {
+                    if (_worldInfo[agent.x - i, agent.y]?.Walkable == false) walls++;
+                }
+            }
+            else if (agent.x - other.x < 0)
+            {
+                for (int i = other.x-1; i >= agent.x; i--)
+                {
+                    if (_worldInfo[other.x - i, other.y]?.Walkable == false) walls++;
+                }
+            }
+            return walls;
+        }*/
+
         public string ToKey()
         {
             //reducion de estados
 
-            return $"{DirX},{DirY},{Proximity},{DangerLevel}";
+            return $"{DirX},{DirY},{Proximity},{DangerLevel},{IsCornerOrAlley},{IsBorderOrOneWall},{BetweenWalls}";
         }
+
     }
 }

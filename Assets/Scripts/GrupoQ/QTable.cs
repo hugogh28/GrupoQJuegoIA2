@@ -120,13 +120,14 @@ namespace GrupoQ
             var qValues = _storage.Data[stateKey];
 
             int bestIndex = 0;
-            float bestValue = qValues[0];
+            float maxValue = GetMaxQ(stateKey);
+            //float bestValue = qValues[0];
 
-            for (int i = 1; i < qValues.Length; i++)
+            for (int i = 0; i < qValues.Length; i++)
             {
-                if (qValues[i] > bestValue)
+                if (qValues[i] == maxValue)
                 {
-                    bestValue = qValues[i];
+                    //bestValue = qValues[i];
                     bestIndex = i;
                 }
             }

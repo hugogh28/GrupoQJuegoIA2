@@ -3,6 +3,7 @@ using NavigationDJIA.Interfaces;
 using NavigationDJIA.World;
 using QMind;
 using QMind.Interfaces;
+using Unity.VisualScripting;
 
 namespace GrupoQ
 {
@@ -95,7 +96,7 @@ namespace GrupoQ
             string nextStateKey = BuildStateKey(newAgentPos, newOtherPos);
             
             // Calcula la recompensa
-            float reward = ComputeReward(newAgentPos, newOtherPos);
+            float reward = ComputeReward(newAgentPos, newOtherPos, _agentPosition, _otherPosition);
 
             if (train)
             {
@@ -122,7 +123,7 @@ namespace GrupoQ
 
         private string BuildStateKey(CellInfo agent, CellInfo other)
         {
-            var state = new QState(agent, other);
+            var state = new QState(agent, other, _worldInfo);
             return state.ToKey();
         }
 
@@ -179,62 +180,20 @@ namespace GrupoQ
         ///   si agent == other -> recompensa positiva grande (captura)
         ///   si no -> pequeña penalización negativa por cada paso.
         /// </summary>
-        private float ComputeReward(CellInfo agent, CellInfo other)
+        private float ComputeReward(CellInfo agent, CellInfo other, CellInfo _agentPosition, CellInfo _otherPosition)
         {
+            float reward = 0f;
             // TODO (alumno).
             // Ejemplo orientativo:
-            if (IsTerminalState(agent, other)) 
-                return -1000f;
-
-            int dNow = Math.Abs(agent.x - other.x) + Math.Abs(agent.y - other.y);
-            int dPrev = Math.Abs(_agentPosition.x - _otherPosition.x) +
-                        Math.Abs(_agentPosition.y - _otherPosition.y);
-
-            float reward = 0f;
-
-            if (dNow > dPrev)
-                reward += 80f;
-
-            // Acercarse al enemigo
-            if (dNow < dPrev)
-                reward -= 120f;
-
-            // Bonus por zona segura
-            if (dNow >= 6)
-                reward += 100f;
-
-            if (dNow <= 2)
-                reward -= 200f;
-
-
-            if (dNow >= 8)
-                reward += 150f;
-
-            // Penalizar quedarse quieto
-            if (agent == _agentPosition && dNow <= dPrev)
-                reward -= 50f;
-
-            // Penalizar estar atrapado
-            int availableExits = CountAvailableExits(agent);
-            reward += availableExits * 10f;
-
-            if (availableExits <= 1)
-                reward -= 100f;
-
-            reward += 1f;
-
-            return reward;
+            if (IsTerminalState(agent, other))
+                return reward -= 100f;
+            else
+            {
+                reward += 5f;
+                return reward;
+            }
         }
 
-        private int CountAvailableExits(CellInfo c)
-        {
-            int exit = 0;
-            if (_worldInfo[c.x + 1, c.y]?.Walkable == true) exit++;
-            if (_worldInfo[c.x - 1, c.y]?.Walkable == true) exit++;
-            if (_worldInfo[c.x, c.y + 1]?.Walkable == true) exit++;
-            if (_worldInfo[c.x, c.y - 1]?.Walkable == true) exit++;
-            return exit;
-        }
         /// <summary>
         /// Condición de final de episodio.
         /// Lo más simple: cuando agente y oponente están en la misma celda.
