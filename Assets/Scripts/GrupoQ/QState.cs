@@ -38,7 +38,8 @@ namespace GrupoQ
         public bool IsCornerOrAlley { get; }
 
         public bool BetweenWalls { get; }
-        public bool IsBorderOrOneWall {  get; }
+        public bool IsBorder {  get; }
+        public bool IsOneWall {  get; }
 
         public QState(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
         {
@@ -47,9 +48,11 @@ namespace GrupoQ
 
             IsCornerOrAlley = CountAvailableExits(agent, _worldInfo) <= 2;
 
-            IsBorderOrOneWall = CountAvailableExits(agent, _worldInfo) == 3;
+            IsBorder = CountAvailableExits(agent, _worldInfo) == 3 && CountOutsideWorldCells(agent,_worldInfo)==1;
 
-            BetweenWalls = RadiusAroundAgent(agent,other,_worldInfo) >= 2;
+            IsOneWall = CountOutsideWorldCells(agent, _worldInfo) == 0 && CountAvailableExits(agent,_worldInfo) == 3;
+
+            BetweenWalls = RadiusAroundAgent(agent,_worldInfo) >= 2; //Aunque se observa que hay solapamiento con IsCornerOrAlley es crucial para hacer la diferencia entre esquinas del mundo y las paredes
 
             DirX = Math.Sign(dx);
             DirY = Math.Sign(dy);
@@ -71,28 +74,41 @@ namespace GrupoQ
         public int CountAvailableExits(CellInfo c, WorldInfo _worldInfo)
         {
             int exit = 0;
-            if (_worldInfo[c.x + 1, c.y]?.Walkable == true) exit++;
-            if (_worldInfo[c.x - 1, c.y]?.Walkable == true) exit++;
-            if (_worldInfo[c.x, c.y + 1]?.Walkable == true) exit++;
-            if (_worldInfo[c.x, c.y - 1]?.Walkable == true) exit++;
+            if (InsideTheWorld(c.x + 1, c.y, _worldInfo) && _worldInfo[c.x + 1, c.y]?.Walkable == true) exit++;
+            if (InsideTheWorld(c.x - 1, c.y, _worldInfo) && _worldInfo[c.x - 1, c.y]?.Walkable == true) exit++;
+            if (InsideTheWorld(c.x, c.y + 1, _worldInfo) && _worldInfo[c.x, c.y + 1]?.Walkable == true) exit++;
+            if (InsideTheWorld(c.x, c.y - 1, _worldInfo) && _worldInfo[c.x, c.y - 1]?.Walkable == true) exit++;
             return exit;
         }
-        private int RadiusAroundAgent(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
+        public int CountOutsideWorldCells(CellInfo c, WorldInfo _worldInfo)
+        {
+            int outsideWorld = 0;
+            if (InsideTheWorld(c.x + 1, c.y, _worldInfo) && _worldInfo[c.x + 1, c.y]?.Walkable == false) outsideWorld++;
+            if (InsideTheWorld(c.x - 1, c.y, _worldInfo) && _worldInfo[c.x - 1, c.y]?.Walkable == false) outsideWorld++;
+            if (InsideTheWorld(c.x, c.y + 1, _worldInfo) && _worldInfo[c.x, c.y + 1]?.Walkable == false) outsideWorld++;
+            if (InsideTheWorld(c.x, c.y - 1, _worldInfo) && _worldInfo[c.x, c.y - 1]?.Walkable == false) outsideWorld++;
+            return outsideWorld;
+        }
+        private int RadiusAroundAgent(CellInfo agent, WorldInfo _worldInfo)
         {
             int walls = 0;
             for(int i = 1; i<=2; i++)
             {
-                
-                    if (_worldInfo[agent.x + i,agent.y]?.Walkable == false) walls++;
-                    if (_worldInfo[agent.x - i,agent.y]?.Walkable == false) walls++;
-                    if (_worldInfo[agent.x,agent.y+i]?.Walkable == false) walls++;
-                    if (_worldInfo[agent.x,agent.y+i]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x+i, agent.y, _worldInfo) && _worldInfo[agent.x + i,agent.y]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x - i, agent.y, _worldInfo) && _worldInfo[agent.x - i,agent.y]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x, agent.y+i, _worldInfo) && _worldInfo[agent.x,agent.y+i]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x, agent.y-i, _worldInfo) && _worldInfo[agent.x,agent.y-i]?.Walkable == false) walls++;
             }
-            if (_worldInfo[agent.x+1,agent.y+1]?.Walkable==false) walls++;
-            if (_worldInfo[agent.x-1,agent.y+1]?.Walkable==false) walls++;
-            if (_worldInfo[agent.x-1,agent.y-1]?.Walkable==false) walls++;
-            if (_worldInfo[agent.x+1,agent.y-1]?.Walkable==false) walls++;
+            if (InsideTheWorld(agent.x + 1, agent.y + 1, _worldInfo) && _worldInfo[agent.x+1,agent.y+1]?.Walkable==false) walls++;
+            if (InsideTheWorld(agent.x - 1, agent.y + 1, _worldInfo) && _worldInfo[agent.x-1,agent.y+1]?.Walkable==false) walls++;
+            if (InsideTheWorld(agent.x - 1, agent.y - 1, _worldInfo) && _worldInfo[agent.x-1,agent.y-1]?.Walkable==false) walls++;
+            if (InsideTheWorld(agent.x + 1, agent.y - 1, _worldInfo) && _worldInfo[agent.x+1,agent.y-1]?.Walkable==false) walls++;
             return walls;
+        }
+
+        private bool InsideTheWorld(int x, int y, WorldInfo _worldInfo)
+        {
+            return x>=0 && x <_worldInfo.WorldSize.x && y>=0 && y < _worldInfo.WorldSize.y;
         }
         /*private int CountWallBetweenPlayer(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
         {
@@ -133,7 +149,7 @@ namespace GrupoQ
         {
             //reducion de estados
 
-            return $"{DirX},{DirY},{Proximity},{DangerLevel},{IsCornerOrAlley},{IsBorderOrOneWall},{BetweenWalls}";
+            return $"{DirX},{DirY},{Proximity},{DangerLevel},{IsCornerOrAlley},{IsBorder},{IsOneWall},{BetweenWalls}";
         }
 
     }
