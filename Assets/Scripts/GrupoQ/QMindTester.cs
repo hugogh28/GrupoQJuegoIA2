@@ -9,6 +9,8 @@ namespace GrupoQ
         private WorldInfo _worldInfo;
         private QTableStorage _qStorage;
         private QTable _qTable;
+        private QMindTrainer _trainer;
+
 
         public void Initialize(WorldInfo worldInfo)
         {
@@ -16,6 +18,7 @@ namespace GrupoQ
 
             _qStorage = new QTableStorage("TablaQ.csv");
             _qTable = new QTable(_qStorage);
+
         }
 
         public CellInfo GetNextStep(CellInfo currentPosition, CellInfo otherPosition)
@@ -27,6 +30,7 @@ namespace GrupoQ
 
             QAction bestAction = _qTable.GetBestAction(stateKey);
 
+
             CellInfo nextPosition = ApplyAction(currentPosition, bestAction);
 
             if (nextPosition == null)
@@ -37,7 +41,7 @@ namespace GrupoQ
 
         private string BuildStateKey(CellInfo agent, CellInfo other)
         {
-            var state = new QState(agent, other, _worldInfo);
+            var state = new QState(/*agent, other, */_worldInfo,_trainer.AgentPosition,_trainer.OtherPosition); 
             return state.ToKey();
         }
 

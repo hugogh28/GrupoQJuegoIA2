@@ -60,11 +60,13 @@ namespace GrupoQ
             _return = 0f;
             _returnAveraged = 0f;
 
+
             _agentPosition = _worldInfo.RandomCell();
             _otherPosition = _worldInfo.RandomCell();
 
             OnEpisodeStarted?.Invoke(this, EventArgs.Empty);
         }
+
 
         private void EndEpisode()
         {
@@ -98,6 +100,7 @@ namespace GrupoQ
             // Calcula la recompensa
             float reward = ComputeReward(newAgentPos, newOtherPos, _agentPosition, _otherPosition);
 
+
             if (train)
             {
                 UpdateQ(stateKey, action, reward, nextStateKey);
@@ -123,7 +126,7 @@ namespace GrupoQ
 
         private string BuildStateKey(CellInfo agent, CellInfo other)
         {
-            var state = new QState(agent, other, _worldInfo);
+            var state = new QState(/*agent, other, */_worldInfo,_agentPosition,_otherPosition);
             return state.ToKey();
         }
 
@@ -184,14 +187,33 @@ namespace GrupoQ
         {
             float reward = 0f;
             float mult = 0f;
+            float dNow = Math.Abs(agent.x - other.x) + Math.Abs(agent.y - other.y);
+            float dPrev = Math.Abs(_agentPosition.x - _otherPosition.x) + Math.Abs(_agentPosition.y - _otherPosition.y);
             // TODO (alumno).
             // Ejemplo orientativo:
-            if (IsTerminalState(agent, other))
-                return reward -= 10f;
+            if (IsTerminalState(agent, other) /*|| dNow<dPrev*/)
+                return reward -= 1000f/*/CurrentStep*/;
             else
             {
-                mult = 1f + (0.01f * CurrentStep);
-                reward += mult;
+                
+                // int Proximity = (int)dNow;
+
+                /*if (dNow > dPrev) // ajustar esto, ahora mismo la IA aprende que es mejor entrar en un bucle de pasos repetidos que la premian constantemente porque al final dPrev y dNow se fuerzan a entrar en ese bucle
+                {
+                    //mult = 0.01f * dNow;
+                    reward += 1;
+                }else *//*if (dNow < dPrev && _agentPosition!= agent) 
+                {
+                    reward -= 3f;                
+                }*/
+                //mult = 1f + (dNow * 0.01f);
+                //reward += mult;
+                /*if(agent == _agentPosition)//incluso teniendo en cuenta solo esto, la IA vuelve a ver más rentable muchas veces caer en un bucle de pasos
+                {
+                    reward -= 2f; //2 porque así contrarresta al positivo de permanecer vivo
+                }*/
+                //reward += 1f+(CurrentStep*0.01f);
+                reward += 1f;
                 return reward;
             }
         }

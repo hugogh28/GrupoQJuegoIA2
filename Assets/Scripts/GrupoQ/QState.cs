@@ -1,4 +1,5 @@
 using NavigationDJIA.World;
+using QMind;
 using System;
 using Unity.VisualScripting;
 
@@ -38,41 +39,66 @@ namespace GrupoQ
         public bool IsCornerOrAlley { get; }
 
         public bool BetweenWalls { get; }
-        public bool IsBorder {  get; }
-        public bool IsOneWall {  get; }
-        //public bool BetweenWallsAndBorders { get; }
+        public bool IsEdge {  get; }
 
+        public bool IsOpenSpace { get; }
 
-        public QState(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
+        public bool IsOneExit { get; }
+        public int Dist { get; }
+
+        public int CurrentStep { get; }
+
+        public QState(/*CellInfo agent, CellInfo other,*/ WorldInfo _worldInfo, CellInfo _Agent, CellInfo _Other)
         {
-            int dx = other.x - agent.x;
-            int dy = other.y - agent.y;
+            int dx = _Other.x - _Agent.x;
+            int dy = _Other.y - _Agent.y;
 
-            IsCornerOrAlley = CountAvailableExits(agent, _worldInfo) <= 2;
 
-            IsBorder = CountAvailableExits(agent, _worldInfo) == 3 && CountOutsideWorldCells(agent,_worldInfo)==1;
+            
 
-            IsOneWall = CountOutsideWorldCells(agent, _worldInfo) == 0 && CountAvailableExits(agent,_worldInfo) == 3;
+            IsCornerOrAlley = CountAvailableExits(_Agent, _worldInfo) == 2;
 
-            //BetweenWallsAndBorders = CountOutsideWorldCells(agent, _worldInfo) == 1 && CountAvailableExits(agent,_worldInfo) <= 2;
+            IsOneExit = CountAvailableExits(_Agent, _worldInfo) == 1;
 
-            BetweenWalls = RadiusAroundAgent(agent,_worldInfo) >= 2; //Aunque se observa que hay solapamiento con IsCornerOrAlley es crucial para hacer la diferencia entre esquinas del mundo y las paredes
+            IsEdge = CountAvailableExits(_Agent, _worldInfo) == 3;
 
-            DirX = Math.Sign(dx);
-            DirY = Math.Sign(dy);
+            BetweenWalls = RadiusAroundAgent(_Agent, _worldInfo) >= 2; //Aunque se observa que hay solapamiento con IsCornerOrAlley es crucial para hacer la diferencia entre esquinas del mundo y las paredes
+
+            //DirX = Math.Sign(dx);
+            //DirY = Math.Sign(dy);
+
+            IsOpenSpace = RadiusAroundAgent(_Agent, _worldInfo) == 0 && CountAvailableExits(_Agent, _worldInfo) == 4;
 
             int dist = Math.Abs(dx) + Math.Abs(dy);
 
-            if (dist <= 1)
+            Dist = CalculateOpponentPosition(_Agent,_Other,dist);
+
+            /*if (dist <= 1)
                 Proximity = 0;
             else if (dist <= 3)
                 Proximity = 1;
             else if (dist <= 6)
                 Proximity = 2;
-            else
+            else if (dist <= 9)
                 Proximity = 3;
+            else if (dist <= 13)
+                Proximity = 4;
+            else Proximity = 5;*/
 
-            DangerLevel = dist <= 2 ? 2 : (dist <= 4 ? 1 : 0);
+        }
+
+        public int CalculateOpponentPosition(CellInfo agent, CellInfo other, int dist)
+        {
+            int pos = -1;
+            if (dist == 1)
+            {
+                if (agent.x == other.x && agent.y - 1 == other.y) pos = 0; //Si el jugador viene desde arriba
+                if (agent.x == other.x && agent.y + 1 == other.y) pos = 1; //Si el jugador viene desde abajo
+                if (agent.x + 1 == other.x && agent.y == other.y) pos = 2; //Si el jugador viene desde la derecha
+                if (agent.x - 1 == other.x && agent.y == other.y) pos = 3; //Si el jugador viene desde la izquierda
+                return pos;
+            }
+            else return pos;
         }
 
         public int CountAvailableExits(CellInfo c, WorldInfo _worldInfo)
@@ -84,15 +110,7 @@ namespace GrupoQ
             if (InsideTheWorld(c.x, c.y - 1, _worldInfo) && _worldInfo[c.x, c.y - 1]?.Walkable == true) exit++;
             return exit;
         }
-        public int CountOutsideWorldCells(CellInfo c, WorldInfo _worldInfo)
-        {
-            int outsideWorld = 0;
-            if (InsideTheWorld(c.x + 1, c.y, _worldInfo) && _worldInfo[c.x + 1, c.y]?.Walkable == false) outsideWorld++;
-            if (InsideTheWorld(c.x - 1, c.y, _worldInfo) && _worldInfo[c.x - 1, c.y]?.Walkable == false) outsideWorld++;
-            if (InsideTheWorld(c.x, c.y + 1, _worldInfo) && _worldInfo[c.x, c.y + 1]?.Walkable == false) outsideWorld++;
-            if (InsideTheWorld(c.x, c.y - 1, _worldInfo) && _worldInfo[c.x, c.y - 1]?.Walkable == false) outsideWorld++;
-            return outsideWorld;
-        }
+        
         private int RadiusAroundAgent(CellInfo agent, WorldInfo _worldInfo)
         {
             int walls = 0;
@@ -114,46 +132,12 @@ namespace GrupoQ
         {
             return x>=0 && x <_worldInfo.WorldSize.x && y>=0 && y < _worldInfo.WorldSize.y;
         }
-        /*private int CountWallBetweenPlayer(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
-        {
-            int walls = 0;
-            
-            if (agent.y - other.y >= 0)
-            {
-                for (int i = agent.y-1; i >= other.y; i--)
-                {
-                    if (_worldInfo[agent.x, agent.y - i]?.Walkable == false) walls++;
-                }
-            }
-            else if (agent.y - other.y < 0)
-            {
-                for (int i = other.y-1; i >= agent.y; i--)
-                {
-                    if (_worldInfo[other.x, other.y - i]?.Walkable == false) walls++;
-                }
-            }
-            if (agent.x - other.x >= 0)
-            {
-                for (int i = agent.x-1; i >= other.x; i--)
-                {
-                    if (_worldInfo[agent.x - i, agent.y]?.Walkable == false) walls++;
-                }
-            }
-            else if (agent.x - other.x < 0)
-            {
-                for (int i = other.x-1; i >= agent.x; i--)
-                {
-                    if (_worldInfo[other.x - i, other.y]?.Walkable == false) walls++;
-                }
-            }
-            return walls;
-        }*/
 
         public string ToKey()
         {
             //reducion de estados
 
-            return $"{DirX},{DirY},{Proximity},{DangerLevel},{IsCornerOrAlley},{IsBorder},{IsOneWall},{BetweenWalls}";
+            return $"{Dist},{IsCornerOrAlley},{IsOneExit},{IsEdge},{BetweenWalls},{IsOpenSpace}";
         }
 
     }
