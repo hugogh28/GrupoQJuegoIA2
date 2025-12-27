@@ -554,7 +554,7 @@ MonoBehaviour:
   train: 1
   algorithmParams:
     alpha: 0.05
-    epsilon: 0.005
+    epsilon: 0.099
     gamma: 0.989
     episodes: 25000
     maxSteps: -1
