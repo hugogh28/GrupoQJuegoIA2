@@ -23,6 +23,8 @@ namespace GrupoQ
         private float _returnAveraged;
         private System.Random _random = new System.Random();
 
+        public QAction action { get; private set; }
+
         #region IQMindTrainer implementation
 
         public CellInfo AgentPosition => _agentPosition;
@@ -37,6 +39,7 @@ namespace GrupoQ
         public event EventHandler OnEpisodeStarted;
         public event EventHandler OnEpisodeFinished;
 
+        
         #endregion
 
         public void Initialize(QMindTrainerParams qMindTrainerParams, WorldInfo worldInfo, INavigationAlgorithm navigationAlgorithm)
@@ -88,7 +91,7 @@ namespace GrupoQ
             string stateKey = BuildStateKey(_agentPosition, _otherPosition);
 
             // Seleciona la acción a realizar
-            QAction action = ChooseAction(stateKey, train);
+            action = ChooseAction(stateKey, train);
 
             // Nuevos estados del agente y del oponente
             CellInfo newAgentPos = ApplyAction(_agentPosition, action);
@@ -98,7 +101,7 @@ namespace GrupoQ
             string nextStateKey = BuildStateKey(newAgentPos, newOtherPos);
             
             // Calcula la recompensa
-            float reward = ComputeReward(newAgentPos, newOtherPos, _agentPosition, _otherPosition);
+            float reward = ComputeReward(newAgentPos, newOtherPos, _agentPosition, _otherPosition, action);
 
 
             if (train)
@@ -126,7 +129,7 @@ namespace GrupoQ
 
         private string BuildStateKey(CellInfo agent, CellInfo other)
         {
-            var state = new QState(/*agent, other, */_worldInfo,_agentPosition,_otherPosition);
+            var state = new QState(agent, other, _worldInfo,_agentPosition,_otherPosition, action);
             return state.ToKey();
         }
 
@@ -136,11 +139,11 @@ namespace GrupoQ
         ///    - Si train == true, con probabilidad epsilon elegir acción aleatoria,
         ///      y con probabilidad 1-epsilon la mejor según _qTable.GetBestAction(stateKey).
         /// </summary>
-        private QAction ChooseAction(string stateKey, bool train)
+        private QAction ChooseAction(string stateKey, bool train) //Escogemos la acción a realizar
         {
             if(!train)
             {
-                return _qTable.GetBestAction(stateKey);
+                return _qTable.GetBestAction(stateKey); 
             }
 
             double r = _random.NextDouble();
@@ -165,7 +168,7 @@ namespace GrupoQ
         /// Q(s,a) = (1 - alpha) * Q(s,a) + alpha * (reward + gamma * max_a' Q(s',a')).
         /// Usa _qTable.GetQ, _qTable.SetQ y _qTable.GetMaxQ.
         /// </summary>
-        private void UpdateQ(string stateKey, QAction action, float reward, string nextStateKey)
+        private void UpdateQ(string stateKey, QAction action, float reward, string nextStateKey) //Actualizamos el valor de una elección en la tabla de estados
         {
             // TODO (alumno):
             float oldQ = _qTable.GetQ(stateKey, action);
@@ -183,37 +186,20 @@ namespace GrupoQ
         ///   si agent == other -> recompensa positiva grande (captura)
         ///   si no -> pequeña penalización negativa por cada paso.
         /// </summary>
-        private float ComputeReward(CellInfo agent, CellInfo other, CellInfo _agentPosition, CellInfo _otherPosition)
+        private float ComputeReward(CellInfo agent, CellInfo other, CellInfo _agentPosition, CellInfo _otherPosition, QAction action)
         {
-            float reward = 0f;
-            float mult = 0f;
-            float dNow = Math.Abs(agent.x - other.x) + Math.Abs(agent.y - other.y);
-            float dPrev = Math.Abs(_agentPosition.x - _otherPosition.x) + Math.Abs(_agentPosition.y - _otherPosition.y);
-            // TODO (alumno).
-            // Ejemplo orientativo:
-            if (IsTerminalState(agent, other) /*|| dNow<dPrev*/)
-                return reward -= 1000f/*/CurrentStep*/;
+            float reward = 0f; //Inicializamos la variable de recompensas
+            float dNow = Math.Abs(agent.x - other.x) + Math.Abs(agent.y - other.y); //Calculamos la distancia actual entre agente y oponente
+            float dPrev = Math.Abs(_agentPosition.x - _otherPosition.x) + Math.Abs(_agentPosition.y - _otherPosition.y); //Calculamos la distancia que había en el anterior paso entre agente y oponente
+
+            if (IsTerminalState(agent, other))
+                return reward -= 1000f; //Aplicamos un gran castigo al agente por ser alcanzado por el oponente       
             else
             {
-                
-                // int Proximity = (int)dNow;
+                if (action == QAction.Stay || agent.Walkable == false) reward -= 1f; //Si el agente permanece quieto o elige una casilla no caminable será penalizado
+                if (dNow < dPrev) reward -= 1f; //Si la distancia entre agente y oponente se reduce se penaliza al agente
+                if(dNow>dPrev) reward += 1f; //Si la distancia entee agente y oponente crece se brinda una recompensa al agente
 
-                /*if (dNow > dPrev) // ajustar esto, ahora mismo la IA aprende que es mejor entrar en un bucle de pasos repetidos que la premian constantemente porque al final dPrev y dNow se fuerzan a entrar en ese bucle
-                {
-                    //mult = 0.01f * dNow;
-                    reward += 1;
-                }else *//*if (dNow < dPrev && _agentPosition!= agent) 
-                {
-                    reward -= 3f;                
-                }*/
-                //mult = 1f + (dNow * 0.01f);
-                //reward += mult;
-                /*if(agent == _agentPosition)//incluso teniendo en cuenta solo esto, la IA vuelve a ver más rentable muchas veces caer en un bucle de pasos
-                {
-                    reward -= 2f; //2 porque así contrarresta al positivo de permanecer vivo
-                }*/
-                //reward += 1f+(CurrentStep*0.01f);
-                reward += 1f;
                 return reward;
             }
         }
@@ -223,14 +209,14 @@ namespace GrupoQ
         /// Lo más simple: cuando agente y oponente están en la misma celda.
         /// También puedes definir una probabilidad para el parámetro v visto en clase.
         /// </summary>
-        private bool IsTerminalState(CellInfo agent, CellInfo other)
+        private bool IsTerminalState(CellInfo agent, CellInfo other) //El episodio termina cuando el agente es alcanzado por el oponente
         {
             // TODO (alumno):
             return agent == other;
         }
 
 
-        private CellInfo ApplyAction(CellInfo agentCell, QAction action)
+        private CellInfo ApplyAction(CellInfo agentCell, QAction action) //Se elige la mejor acción posible en base a lo aprendido (aunque dicha elección puede variar por Epsilon)
         {
             int nx = agentCell.x;;
             int ny = agentCell.y;

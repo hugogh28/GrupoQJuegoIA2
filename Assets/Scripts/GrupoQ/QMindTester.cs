@@ -1,6 +1,7 @@
 using NavigationDJIA.World;
 using QMind;
 using QMind.Interfaces;
+using System;
 
 namespace GrupoQ
 {
@@ -9,7 +10,8 @@ namespace GrupoQ
         private WorldInfo _worldInfo;
         private QTableStorage _qStorage;
         private QTable _qTable;
-        private QMindTrainer _trainer;
+        private IQMindTrainer _trainer;
+        private QMindTrainer trainer;
 
 
         public void Initialize(WorldInfo worldInfo)
@@ -41,7 +43,7 @@ namespace GrupoQ
 
         private string BuildStateKey(CellInfo agent, CellInfo other)
         {
-            var state = new QState(/*agent, other, */_worldInfo,_trainer.AgentPosition,_trainer.OtherPosition); 
+            var state = new QState(agent, other, _worldInfo, _trainer.AgentPosition,_trainer.OtherPosition, trainer.action); //Hay un error en la declaración de _trainer.AgentPosition y _trainer.OtherPosition (y puede que en trainer.action)
             return state.ToKey();
         }
 
@@ -73,6 +75,14 @@ namespace GrupoQ
             }
 
             CellInfo cell = _worldInfo[nx, ny];
+
+            //int dNow = Math.Abs(cell.x - other.x) + Math.Abs(cell.y - other.y);
+            //int dPrev = Math.Abs(agentCell.x - opponentCell.x) + Math.Abs(agentCell.y - opponentCell.y);
+
+            /*if (dNow < dPrev)
+            {
+
+            }*/
 
             if (cell == null || !cell.Walkable)
                 return agentCell;

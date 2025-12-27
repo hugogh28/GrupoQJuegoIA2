@@ -1,6 +1,8 @@
 using NavigationDJIA.World;
 using QMind;
 using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 
 /// <summary>
@@ -30,64 +32,77 @@ namespace GrupoQ
 {
     public sealed class QState
     {
-        public int DirX { get; }
-        public int DirY { get; }
+        //Declaración de los booleanos comprobantes de muros
 
-        public int Proximity { get; }
-        public int DangerLevel { get; }
+        public bool WallsOnX { get; }
+        public bool WallsOnXi { get; }
+        public bool WallsOnY { get; }
+        public bool WallsOnYi { get; }
 
-        public bool IsCornerOrAlley { get; }
+        //Declaración de los booleanos comprobantes del número de salidas posibles alrededor del agente
 
-        public bool BetweenWalls { get; }
-        public bool IsEdge {  get; }
-
+        public bool OneExit { get; }
+        public bool TwoExits { get; }
+        public bool ThreeExits {  get; }
         public bool IsOpenSpace { get; }
 
-        public bool IsOneExit { get; }
+        //Declaración de booleanos comprobantes de la dirección por la que viene el oponente
+
+        public bool OpponentDir1Y { get; }
+        public bool OpponentDir1Yi { get; }
+        public bool OpponentDir1X { get; }
+        public bool OpponentDir1Xi { get; }
+
+        //Declaración de la distancia entre agente y oponente
+
         public int Dist { get; }
 
-        public int CurrentStep { get; }
+        //Declaración del booleano comprobante de la existencia de movimiento
 
-        public QState(/*CellInfo agent, CellInfo other,*/ WorldInfo _worldInfo, CellInfo _Agent, CellInfo _Other)
+        public bool IsMoving { get; }
+
+
+        public QState(CellInfo agent, CellInfo other, WorldInfo _worldInfo, CellInfo _Agent, CellInfo _Other, QAction action)
         {
+            //Comprobamos si hay muros cerca
+            
+            WallsOnX = WallsX(agent, _worldInfo);
+            WallsOnXi = WallsXi(agent, _worldInfo);
+            WallsOnY = WallsY(agent, _worldInfo);
+            WallsOnYi = WallsYi(agent, _worldInfo);
+
+            //Comprobamos el número de salidas 
+
+            OneExit = CountAvailableExits(_Agent, _worldInfo) == 1;   //Comprobamos si el agente está en un callejón con solo una salida posible (ignorando si se tratan de casillas de muros o fuera del mundo)
+
+            TwoExits = CountAvailableExits(_Agent, _worldInfo) == 2;  //Comprobamos si el agente está en una esquina con dos salidas posibles (ignorando si se tratan de casillas de muros o fuera del mundo)
+
+            ThreeExits = CountAvailableExits(_Agent, _worldInfo) == 3;//Comprobamos si el agente está contra un muro o el borde, contando con tres salidas posibles (ignorando si se tratan de casillas de muros o fuera del mundo)
+
+            IsOpenSpace = ((WallsOnX && WallsOnXi && WallsOnY && WallsOnYi) == false) && CountAvailableExits(_Agent, _worldInfo) == 4; //Si no hay muros alrededor y sigue habiendo 4 salidas, el agente está en un espacio abierto
+
+            //Calculamos la distancia de Manhattan entre agente y oponente
+
             int dx = _Other.x - _Agent.x;
             int dy = _Other.y - _Agent.y;
 
-
-            
-
-            IsCornerOrAlley = CountAvailableExits(_Agent, _worldInfo) == 2;
-
-            IsOneExit = CountAvailableExits(_Agent, _worldInfo) == 1;
-
-            IsEdge = CountAvailableExits(_Agent, _worldInfo) == 3;
-
-            BetweenWalls = RadiusAroundAgent(_Agent, _worldInfo) >= 2; //Aunque se observa que hay solapamiento con IsCornerOrAlley es crucial para hacer la diferencia entre esquinas del mundo y las paredes
-
-            //DirX = Math.Sign(dx);
-            //DirY = Math.Sign(dy);
-
-            IsOpenSpace = RadiusAroundAgent(_Agent, _worldInfo) == 0 && CountAvailableExits(_Agent, _worldInfo) == 4;
-
             int dist = Math.Abs(dx) + Math.Abs(dy);
 
-            Dist = CalculateOpponentPosition(_Agent,_Other,dist);
+            Dist = dist;
 
-            /*if (dist <= 1)
-                Proximity = 0;
-            else if (dist <= 3)
-                Proximity = 1;
-            else if (dist <= 6)
-                Proximity = 2;
-            else if (dist <= 9)
-                Proximity = 3;
-            else if (dist <= 13)
-                Proximity = 4;
-            else Proximity = 5;*/
+            //Comprobamos si el oponente está al lado del agente y por dónde viene
 
+            if (CalculateOpponentPosition(_Agent, _Other, dist) == 0) OpponentDir1Y = true;  //En dist=1 se comprueba que el oponente venga desde arriba
+            if (CalculateOpponentPosition(_Agent, _Other, dist) == 1) OpponentDir1Yi = true; //En dist=1 se comprueba que el oponente venga desde abajo
+            if (CalculateOpponentPosition(_Agent, _Other, dist) == 3) OpponentDir1X = true;  //En dist=1 se comprueba que el oponente venga desde la derecha
+            if (CalculateOpponentPosition(_Agent, _Other, dist) == 4) OpponentDir1Xi = true; //En dist=1 se comprueba que el oponente venga desde la izquierda
+
+            //Comprobamos si el agente se está moviendo
+
+            IsMoving = action != QAction.Stay || agent.Walkable/*Esta variable es posible que se necesite eliminar*/ == true;
         }
 
-        public int CalculateOpponentPosition(CellInfo agent, CellInfo other, int dist)
+        public int CalculateOpponentPosition(CellInfo agent, CellInfo other, int dist) //Comprobamos en dist=1 por qué dirección viene el oponente
         {
             int pos = -1;
             if (dist == 1)
@@ -101,7 +116,7 @@ namespace GrupoQ
             else return pos;
         }
 
-        public int CountAvailableExits(CellInfo c, WorldInfo _worldInfo)
+        public int CountAvailableExits(CellInfo c, WorldInfo _worldInfo) //Comprobamos el número de casillas caminables en torno al agente
         {
             int exit = 0;
             if (InsideTheWorld(c.x + 1, c.y, _worldInfo) && _worldInfo[c.x + 1, c.y]?.Walkable == true) exit++;
@@ -111,33 +126,65 @@ namespace GrupoQ
             return exit;
         }
         
-        private int RadiusAroundAgent(CellInfo agent, WorldInfo _worldInfo)
+        private bool WallsX(CellInfo agent, WorldInfo _worldInfo) //Comprobamos que haya muros en el lado derecho del agente
         {
             int walls = 0;
             for(int i = 1; i<=2; i++)
             {
-                if (InsideTheWorld(agent.x+i, agent.y, _worldInfo) && _worldInfo[agent.x + i,agent.y]?.Walkable == false) walls++;
-                if (InsideTheWorld(agent.x - i, agent.y, _worldInfo) && _worldInfo[agent.x - i,agent.y]?.Walkable == false) walls++;
-                if (InsideTheWorld(agent.x, agent.y+i, _worldInfo) && _worldInfo[agent.x,agent.y+i]?.Walkable == false) walls++;
-                if (InsideTheWorld(agent.x, agent.y-i, _worldInfo) && _worldInfo[agent.x,agent.y-i]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x + i, agent.y, _worldInfo) && _worldInfo[agent.x + i, agent.y]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x + i, agent.y+i, _worldInfo) && _worldInfo[agent.x + i, agent.y+i]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x + i, agent.y-i, _worldInfo) && _worldInfo[agent.x + i, agent.y-i]?.Walkable == false) walls++;
             }
-            if (InsideTheWorld(agent.x + 1, agent.y + 1, _worldInfo) && _worldInfo[agent.x+1,agent.y+1]?.Walkable==false) walls++;
-            if (InsideTheWorld(agent.x - 1, agent.y + 1, _worldInfo) && _worldInfo[agent.x-1,agent.y+1]?.Walkable==false) walls++;
-            if (InsideTheWorld(agent.x - 1, agent.y - 1, _worldInfo) && _worldInfo[agent.x-1,agent.y-1]?.Walkable==false) walls++;
-            if (InsideTheWorld(agent.x + 1, agent.y - 1, _worldInfo) && _worldInfo[agent.x+1,agent.y-1]?.Walkable==false) walls++;
-            return walls;
+            if (walls >= 1) return true;
+            else return false;
+        }private bool WallsXi(CellInfo agent, WorldInfo _worldInfo) //Comprobamos que haya muros en el lado izquierdo del agente
+        {
+            int walls = 0;
+            for(int i = 1; i<=2; i++)
+            {
+                if (InsideTheWorld(agent.x - i, agent.y, _worldInfo) && _worldInfo[agent.x - i, agent.y]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x - i, agent.y+i, _worldInfo) && _worldInfo[agent.x - i, agent.y+i]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x - i, agent.y-i, _worldInfo) && _worldInfo[agent.x - i, agent.y-i]?.Walkable == false) walls++;
+            }
+            if (walls >= 1) return true;
+            else return false;
+        }private bool WallsY(CellInfo agent, WorldInfo _worldInfo) //Comprobamos que haya muros debajo del agente
+        {
+            int walls = 0;
+            for(int i = 1; i<=2; i++)
+            {
+                if (InsideTheWorld(agent.x, agent.y+i, _worldInfo) && _worldInfo[agent.x, agent.y+i]?.Walkable == false) walls++;
+                //if(i == 2) //Puede ser necesario volver a añadir esto por solapamiento entre WallsOnX/i y WallsOnY/i
+                //{ 
+                if (InsideTheWorld(agent.x + i, agent.y + i, _worldInfo) && _worldInfo[agent.x + i, agent.y+i]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x - i, agent.y+i, _worldInfo) && _worldInfo[agent.x - i, agent.y+i]?.Walkable == false) walls++;
+                //}
+            }
+            if (walls >= 1) return true;
+            else return false;
+        }private bool WallsYi(CellInfo agent, WorldInfo _worldInfo) //Comprobamos que haya muros encima del agente
+        {
+            int walls = 0;
+            for(int i = 1; i<=2; i++)
+            {
+                if (InsideTheWorld(agent.x, agent.y-i, _worldInfo) && _worldInfo[agent.x , agent.y-i]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x + i, agent.y-i, _worldInfo) && _worldInfo[agent.x + i, agent.y-i]?.Walkable == false) walls++;
+                if (InsideTheWorld(agent.x - i, agent.y-i, _worldInfo) && _worldInfo[agent.x - i, agent.y-i]?.Walkable == false) walls++;
+            }
+            if (walls >= 1) return true;
+            else return false;
         }
 
-        private bool InsideTheWorld(int x, int y, WorldInfo _worldInfo)
+        private bool InsideTheWorld(int x, int y, WorldInfo _worldInfo) //Comprobamos que la casilla comprobada esté dentro del mundo
         {
             return x>=0 && x <_worldInfo.WorldSize.x && y>=0 && y < _worldInfo.WorldSize.y;
         }
 
-        public string ToKey()
+        public string ToKey() //Asignamos los comprobantes para la creación de estados
         {
             //reducion de estados
 
-            return $"{Dist},{IsCornerOrAlley},{IsOneExit},{IsEdge},{BetweenWalls},{IsOpenSpace}";
+            return $"{WallsOnX},{WallsOnXi},{WallsOnY},{WallsOnYi}|{OneExit},{TwoExits},{ThreeExits},{IsOpenSpace}|{OpponentDir1Y},{OpponentDir1Yi},{OpponentDir1X},{OpponentDir1Xi}|{Dist}|{IsMoving}";
         }
 
     }
