@@ -53,16 +53,17 @@ namespace GrupoQ
         public bool OpponentDir1X { get; }
         public bool OpponentDir1Xi { get; }
 
-        //Declaración de la distancia entre agente y oponente
+        //Declaración de la dirección relativa del oponente
 
-        public int Dist { get; }
+        public int DirX { get; }
+        public int DirY { get; }
 
         //Declaración del booleano comprobante de la existencia de movimiento
 
         public bool IsMoving { get; }
 
 
-        public QState(CellInfo agent, CellInfo other, WorldInfo _worldInfo, CellInfo _Agent, CellInfo _Other, QAction action)
+        public QState(CellInfo agent, CellInfo other, WorldInfo _worldInfo)
         {
             //Comprobamos si hay muros cerca
             
@@ -73,33 +74,34 @@ namespace GrupoQ
 
             //Comprobamos el número de salidas 
 
-            OneExit = CountAvailableExits(_Agent, _worldInfo) == 1;   //Comprobamos si el agente está en un callejón con solo una salida posible (ignorando si se tratan de casillas de muros o fuera del mundo)
+            OneExit = CountAvailableExits(agent, _worldInfo) == 1;   //Comprobamos si el agente está en un callejón con solo una salida posible (ignorando si se tratan de casillas de muros o fuera del mundo)
 
-            TwoExits = CountAvailableExits(_Agent, _worldInfo) == 2;  //Comprobamos si el agente está en una esquina con dos salidas posibles (ignorando si se tratan de casillas de muros o fuera del mundo)
+            TwoExits = CountAvailableExits(agent, _worldInfo) == 2;  //Comprobamos si el agente está en una esquina con dos salidas posibles (ignorando si se tratan de casillas de muros o fuera del mundo)
 
-            ThreeExits = CountAvailableExits(_Agent, _worldInfo) == 3;//Comprobamos si el agente está contra un muro o el borde, contando con tres salidas posibles (ignorando si se tratan de casillas de muros o fuera del mundo)
+            ThreeExits = CountAvailableExits(agent, _worldInfo) == 3;//Comprobamos si el agente está contra un muro o el borde, contando con tres salidas posibles (ignorando si se tratan de casillas de muros o fuera del mundo)
 
-            IsOpenSpace = ((WallsOnX && WallsOnXi && WallsOnY && WallsOnYi) == false) && CountAvailableExits(_Agent, _worldInfo) == 4; //Si no hay muros alrededor y sigue habiendo 4 salidas, el agente está en un espacio abierto
+            IsOpenSpace = /*((WallsOnX && WallsOnXi && WallsOnY && WallsOnYi) == false) && */CountAvailableExits(agent, _worldInfo) == 4; //Si no hay muros alrededor y sigue habiendo 4 salidas, el agente está en un espacio abierto
 
             //Calculamos la distancia de Manhattan entre agente y oponente
 
-            int dx = _Other.x - _Agent.x;
-            int dy = _Other.y - _Agent.y;
+            int dx = other.x - agent.x;
+            int dy = other.y - agent.y;
 
             int dist = Math.Abs(dx) + Math.Abs(dy);
 
-            Dist = dist;
+            DirX = Math.Sign(dx);
+            DirY = Math.Sign(dy);
 
             //Comprobamos si el oponente está al lado del agente y por dónde viene
 
-            if (CalculateOpponentPosition(_Agent, _Other, dist) == 0) OpponentDir1Y = true;  //En dist=1 se comprueba que el oponente venga desde arriba
-            if (CalculateOpponentPosition(_Agent, _Other, dist) == 1) OpponentDir1Yi = true; //En dist=1 se comprueba que el oponente venga desde abajo
-            if (CalculateOpponentPosition(_Agent, _Other, dist) == 3) OpponentDir1X = true;  //En dist=1 se comprueba que el oponente venga desde la derecha
-            if (CalculateOpponentPosition(_Agent, _Other, dist) == 4) OpponentDir1Xi = true; //En dist=1 se comprueba que el oponente venga desde la izquierda
+            if (CalculateOpponentPosition(agent, other, dist) == 0) OpponentDir1Y = true;  //En dist=1 se comprueba que el oponente venga desde arriba
+            if (CalculateOpponentPosition(agent, other, dist) == 1) OpponentDir1Yi = true; //En dist=1 se comprueba que el oponente venga desde abajo
+            if (CalculateOpponentPosition(agent, other, dist) == 2) OpponentDir1X = true;  //En dist=1 se comprueba que el oponente venga desde la derecha
+            if (CalculateOpponentPosition(agent, other, dist) == 3) OpponentDir1Xi = true; //En dist=1 se comprueba que el oponente venga desde la izquierda
 
             //Comprobamos si el agente se está moviendo
 
-            IsMoving = action != QAction.Stay || agent.Walkable/*Esta variable es posible que se necesite eliminar*/ == true;
+            //IsMoving = action != QAction.Stay || agent.Walkable/*Esta variable es posible que se necesite eliminar*/ == true;
         }
 
         public int CalculateOpponentPosition(CellInfo agent, CellInfo other, int dist) //Comprobamos en dist=1 por qué dirección viene el oponente
@@ -184,7 +186,7 @@ namespace GrupoQ
         {
             //reducion de estados
 
-            return $"{WallsOnX},{WallsOnXi},{WallsOnY},{WallsOnYi}|{OneExit},{TwoExits},{ThreeExits},{IsOpenSpace}|{OpponentDir1Y},{OpponentDir1Yi},{OpponentDir1X},{OpponentDir1Xi}|{Dist}|{IsMoving}";
+            return $"{WallsOnX},{WallsOnXi},{WallsOnY},{WallsOnYi}|{OneExit},{TwoExits},{ThreeExits},{IsOpenSpace}|{OpponentDir1Y},{OpponentDir1Yi},{OpponentDir1X},{OpponentDir1Xi}|{DirX},{DirY}";
         }
 
     }

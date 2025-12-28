@@ -10,6 +10,7 @@ namespace GrupoQ
     public class QMindTrainer : IQMindTrainer
     {
         private QMindTrainerParams _params;
+
         private WorldInfo _worldInfo;
         INavigationAlgorithm _navigationAlgorithm;
 
@@ -82,7 +83,23 @@ namespace GrupoQ
                 return;
             }
 
+            DecFunc(_params.alpha,_params.epsilon);
             StartNewEpisode();
+        }
+
+        private void DecFunc(float alpha, float epsilon)
+        {
+            /*if(CurrentEpisode == 1)
+            {
+                float alphaPrim = _params.alpha;
+                float epsilonPrim = _params.epsilon;
+            }*/
+
+            double alphalim = Math.Max(0.01,alpha-0.00007);
+            double epsilonlim = Math.Max(0.001,epsilon-0.0001);
+
+            _params.alpha = (float)alphalim;
+            _params.epsilon = (float)epsilonlim;
         }
 
         public void DoStep(bool train)
@@ -129,7 +146,7 @@ namespace GrupoQ
 
         private string BuildStateKey(CellInfo agent, CellInfo other)
         {
-            var state = new QState(agent, other, _worldInfo,_agentPosition,_otherPosition, action);
+            var state = new QState(agent, other, _worldInfo);
             return state.ToKey();
         }
 
@@ -196,7 +213,7 @@ namespace GrupoQ
                 return reward -= 1000f; //Aplicamos un gran castigo al agente por ser alcanzado por el oponente       
             else
             {
-                if (action == QAction.Stay || agent.Walkable == false) reward -= 1f; //Si el agente permanece quieto o elige una casilla no caminable será penalizado
+                if (action == QAction.Stay || agent.Walkable == false || agent == _agentPosition) reward -= 1f; //Si el agente permanece quieto o elige una casilla no caminable será penalizado
                 if (dNow < dPrev) reward -= 1f; //Si la distancia entre agente y oponente se reduce se penaliza al agente
                 if(dNow>dPrev) reward += 1f; //Si la distancia entee agente y oponente crece se brinda una recompensa al agente
 

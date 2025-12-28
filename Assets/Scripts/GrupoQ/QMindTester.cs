@@ -43,7 +43,7 @@ namespace GrupoQ
 
         private string BuildStateKey(CellInfo agent, CellInfo other)
         {
-            var state = new QState(agent, other, _worldInfo, _trainer.AgentPosition,_trainer.OtherPosition, trainer.action); //Hay un error en la declaración de _trainer.AgentPosition y _trainer.OtherPosition (y puede que en trainer.action)
+            var state = new QState(agent, other, _worldInfo); 
             return state.ToKey();
         }
 

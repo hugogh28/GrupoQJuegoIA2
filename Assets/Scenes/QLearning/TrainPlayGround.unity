@@ -553,10 +553,10 @@ MonoBehaviour:
   agentSpeed: 10
   train: 1
   algorithmParams:
-    alpha: 0.05
-    epsilon: 0.099
+    alpha: 0.8
+    epsilon: 1
     gamma: 0.989
-    episodes: 25000
+    episodes: 10000
     maxSteps: -1
     episodesBetweenSaves: 100
 --- !u!4 &430024629
