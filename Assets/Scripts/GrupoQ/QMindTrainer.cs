@@ -206,19 +206,25 @@ namespace GrupoQ
         private float ComputeReward(CellInfo agent, CellInfo other, CellInfo _agentPosition, CellInfo _otherPosition, QAction action)
         {
             float reward = 0f; //Inicializamos la variable de recompensas
+
+            if (IsTerminalState(agent, other))
+                return reward = -1000f; //Aplicamos un gran castigo al agente por ser alcanzado por el oponente      
+
             float dNow = Math.Abs(agent.x - other.x) + Math.Abs(agent.y - other.y); //Calculamos la distancia actual entre agente y oponente
             float dPrev = Math.Abs(_agentPosition.x - _otherPosition.x) + Math.Abs(_agentPosition.y - _otherPosition.y); //Calculamos la distancia que había en el anterior paso entre agente y oponente
 
-            if (IsTerminalState(agent, other))
-                return reward -= 1000f; //Aplicamos un gran castigo al agente por ser alcanzado por el oponente       
-            else
-            {
-                if (action == QAction.Stay || agent.Walkable == false || agent == _agentPosition) reward -= 1f; //Si el agente permanece quieto o elige una casilla no caminable será penalizado
-                if (dNow < dPrev) reward -= 1f; //Si la distancia entre agente y oponente se reduce se penaliza al agente
-                if(dNow>dPrev) reward += 1f; //Si la distancia entee agente y oponente crece se brinda una recompensa al agente
 
+            if (dNow < dPrev) 
+                reward -= 10f; //Si la distancia entre agente y oponente se reduce se penaliza al agente
+            if (dNow > dPrev) 
+                reward += 5f; //Si la distancia entee agente y oponente crece se brinda una recompensa al agente
+
+
+            if (action == QAction.Stay || agent.Walkable == false || agent == _agentPosition)
+                    reward -= 5f; //Si el agente permanece quieto o elige una casilla no caminable será penalizado
+                
                 return reward;
-            }
+            
         }
 
         /// <summary>
