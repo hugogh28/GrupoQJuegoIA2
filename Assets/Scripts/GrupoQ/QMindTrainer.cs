@@ -214,7 +214,7 @@ namespace GrupoQ
             {
                 if (dNow < dPrev)
                     reward -= 1f; //Si la distancia entre agente y oponente se reduce se penaliza al agente
-                if (dNow >= dPrev)
+                if (dNow > dPrev)
                     reward += 1f; //Si la distancia entee agente y oponente crece se brinda una recompensa al agente
 
 
