@@ -87,16 +87,15 @@ namespace GrupoQ
             StartNewEpisode();
         }
 
-        private void DecFunc(float alpha, float epsilon)
+        private void DecFunc(float alpha, float epsilon)    //Función decreciente con cada episodio para asegurar una curva de aprendizaje acorde a la cantidad de episodios realizados
         {
             /*if(CurrentEpisode == 1)
             {
                 float alphaPrim = _params.alpha;
                 float epsilonPrim = _params.epsilon;
             }*/
-
-            double alphalim = Math.Max(0.01,alpha-0.00007);
-            double epsilonlim = Math.Max(0.001,epsilon-0.0001);
+            double alphalim = Math.Max(0.01f,alpha-(0.8f/_params.episodes));      //Reducimos la cantidad de aprendizaje en función del número de episodios indicados en el entrenamiento (0.8 es el valor inicial) hasta un mínimo de 0.01
+            double epsilonlim = Math.Max(0.001f,epsilon-(1f/_params.episodes));   //Reducimos la aleatoriedad en función del número de episodios indicados en el entrenamiento (1 es el valor inicial) hasta un mínimo de 0.001
 
             _params.alpha = (float)alphalim;
             _params.epsilon = (float)epsilonlim;
@@ -206,24 +205,24 @@ namespace GrupoQ
         private float ComputeReward(CellInfo agent, CellInfo other, CellInfo _agentPosition, CellInfo _otherPosition, QAction action)
         {
             float reward = 0f; //Inicializamos la variable de recompensas
-
-            if (IsTerminalState(agent, other))
-                return reward = -1000f; //Aplicamos un gran castigo al agente por ser alcanzado por el oponente      
-
             float dNow = Math.Abs(agent.x - other.x) + Math.Abs(agent.y - other.y); //Calculamos la distancia actual entre agente y oponente
             float dPrev = Math.Abs(_agentPosition.x - _otherPosition.x) + Math.Abs(_agentPosition.y - _otherPosition.y); //Calculamos la distancia que había en el anterior paso entre agente y oponente
 
+            if (IsTerminalState(agent, other))
+                return reward -= 1000f; //Aplicamos un gran castigo al agente por ser alcanzado por el oponente      
+            else
+            {
+                if (dNow < dPrev)
+                    reward -= 1f; //Si la distancia entre agente y oponente se reduce se penaliza al agente
+                if (dNow >= dPrev)
+                    reward += 1f; //Si la distancia entee agente y oponente crece se brinda una recompensa al agente
 
-            if (dNow < dPrev) 
-                reward -= 10f; //Si la distancia entre agente y oponente se reduce se penaliza al agente
-            if (dNow > dPrev) 
-                reward += 5f; //Si la distancia entee agente y oponente crece se brinda una recompensa al agente
 
+                if (agent.Walkable == false)
+                   reward -= 1f; //Si el agente permanece quieto o elige una casilla no caminable será penalizado
 
-            if (action == QAction.Stay || agent.Walkable == false || agent == _agentPosition)
-                    reward -= 5f; //Si el agente permanece quieto o elige una casilla no caminable será penalizado
-                
                 return reward;
+            }
             
         }
 
